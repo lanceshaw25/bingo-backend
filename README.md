@@ -24,8 +24,3 @@ Kafka UI is available at <http://localhost:8081>.
 ```
 
 Tests use an embedded Kafka broker, so they do not need Docker.
-
-## Notes
-
-`docs/kafka-tutorial-notes.md` is the README from the tutorial project
-this backend started from.

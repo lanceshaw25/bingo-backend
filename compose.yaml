@@ -1,3 +1,6 @@
+# Kafka advertises two addresses because clients reach it from two places:
+#   localhost:9092  - the Spring app, running on the host
+#   kafka:29092     - Kafka UI, running inside Docker
 services:
   kafka:
     image: apache/kafka:3.8.0
