@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: bingo-backend
+
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+
+logging:
+  level:
+    org:
+      apache:
+        kafka: WARN
