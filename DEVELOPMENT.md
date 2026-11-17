@@ -291,45 +291,22 @@ next. AI coding tools can help explain, review, and suggest code, but
 the goal is to learn the architecture and be able to explain the design
 decisions---not simply generate a finished application.
 
-## Future Deployment Plan (Tentative)
+## Deployment
 
-The initial goal is to develop and test all applications locally. Once the core game is functional, the next milestone will be deploying a publicly accessible demonstration.
+Undecided. Local development and a working multiplayer game come first;
+deploying a public demo is a later milestone. The options under
+consideration (Azure, OCI, and a temporary AWS deployment for hands-on
+experience) are in [CLOUD_DEPLOYMENT.md](CLOUD_DEPLOYMENT.md).
 
-The current preferred deployment approach is:
+Whatever the choice, the deployment should:
 
-| Component        | Potential Hosting                 | Notes                                                                                          |
-| ---------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `bingo-frontend` | Cloudflare Pages                  | Host the React/Vite static frontend with HTTPS and GitHub-based deployments.                   |
-| `bingo-backend`  | Oracle Cloud Infrastructure (OCI) | Run the Spring Boot application on an Always Free VM, subject to availability and eligibility. |
-| Apache Kafka     | OCI VM                            | Initially run Kafka alongside the backend using Docker Compose.                                |
-| `bingo-lancebot` | Local machine / OCI               | Run as a separate client application. Cloud deployment is optional.                            |
-
-### Proposed Architecture
-
-* **Cloudflare Pages:** Publicly serve the React application.
-* **Oracle Cloud:** Host the backend and Kafka on a Linux VM, potentially using Docker Compose.
-* **WebSockets:** Provide real-time communication between the backend and connected players.
-* **REST API:** Provide the common interface for React and lanceBot clients.
-* **GitHub:** Maintain independent repositories and support automated build and deployment workflows.
-
-### Flexibility and Future Considerations
-
-This is an initial deployment concept, not a fixed infrastructure requirement. Hosting providers, service placement, and deployment architecture may change as the project evolves.
-
-Potential alternatives include managed Kafka services, other cloud providers, self-hosted development infrastructure, or different hosting arrangements for individual applications.
-
-The public demonstration should prioritize reliability and availability so prospective users and employers can access it without depending on local development machines or home infrastructure.
-
-Self-hosting (such as elane-server) remains an option for development, experimentation, and testing, but is not the preferred location for the primary public demonstration.
-
-The deployment strategy should prioritize:
-
-* Staying within free-tier allowances where practical.
-* Keeping hosting costs low and avoiding unnecessary paid services.
-* Maintaining independent deployment of the frontend, backend, and bot.
-* Using Docker to make local development and cloud deployment more consistent.
-* Avoiding unnecessary dependence on any particular cloud provider.
-* Allowing infrastructure to evolve without requiring significant application changes.
-
-Cloud deployment is a later milestone. Local development and a working multiplayer game take priority.
-
+-   Keep costs low, using free tiers where practical and tearing down
+    anything that is only there for learning.
+-   Keep the frontend, backend, and bot independently deployable.
+-   Use Docker so local development and cloud deployment stay
+    consistent.
+-   Avoid depending on any particular cloud provider, so hosting can
+    change without significant application changes.
+-   Host the public demo somewhere reliable, not on a home machine.
+    Self-hosting (such as elane-server) is fine for development and
+    experiments.
