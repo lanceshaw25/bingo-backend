@@ -75,6 +75,14 @@ public class GameService {
 	}
 
 	/**
+	 * @throws GameNotFoundException if there is no such game
+	 * @throws PlayerNotFoundException if the game has no such player
+	 */
+	public Player player(GameId gameId, PlayerId playerId) {
+		return find(gameId).player(playerId).orElseThrow(() -> new PlayerNotFoundException(gameId, playerId));
+	}
+
+	/**
 	 * Starts the game and begins calling numbers, the first one {@code bingo.call-interval} from now.
 	 *
 	 * @throws GameNotFoundException if there is no such game
@@ -91,10 +99,16 @@ public class GameService {
 	 * A player claims Bingo. A winning claim also stops the game's number calling.
 	 *
 	 * @throws GameNotFoundException if there is no such game
+	 * @throws PlayerNotFoundException if the game has no such player
 	 * @see Game#claimBingo(PlayerId)
 	 */
 	public ClaimResult claimBingo(GameId gameId, PlayerId playerId) {
-		ClaimResult result = find(gameId).claimBingo(playerId);
+		Game game = find(gameId);
+		// Players are never removed, so this check cannot go stale before the claim below.
+		if (game.player(playerId).isEmpty()) {
+			throw new PlayerNotFoundException(gameId, playerId);
+		}
+		ClaimResult result = game.claimBingo(playerId);
 		if (result instanceof ClaimResult.Won won) {
 			stopCalling(gameId);
 			log.info("Player {} won game {} with {}", playerId, gameId, won.lines());

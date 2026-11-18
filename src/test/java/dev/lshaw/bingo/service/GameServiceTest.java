@@ -5,6 +5,7 @@ import dev.lshaw.bingo.game.GameId;
 import dev.lshaw.bingo.game.GameSnapshot;
 import dev.lshaw.bingo.game.GameStatus;
 import dev.lshaw.bingo.game.Player;
+import dev.lshaw.bingo.game.PlayerId;
 import dev.lshaw.bingo.game.WinChecker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,6 +91,25 @@ class GameServiceTest {
 		GameId id = service.createGame().id();
 		Player lance = service.join(id, "Lance");
 		assertThat(service.snapshot(id).players()).containsExactly(lance);
+	}
+
+	@Test
+	void playerFindsAPlayerInTheGame() {
+		GameId id = service.createGame().id();
+		Player lance = service.join(id, "Lance");
+		assertThat(service.player(id, lance.id())).isEqualTo(lance);
+	}
+
+	@Test
+	void unknownPlayerIsNotFound() {
+		GameId id = startedGameWith("Lance");
+		PlayerId stranger = PlayerId.random();
+		assertThatThrownBy(() -> service.player(id, stranger)).isInstanceOf(PlayerNotFoundException.class);
+		assertThatThrownBy(() -> service.claimBingo(id, stranger))
+				.isInstanceOfSatisfying(PlayerNotFoundException.class, e -> {
+					assertThat(e.gameId()).isEqualTo(id);
+					assertThat(e.playerId()).isEqualTo(stranger);
+				});
 	}
 
 	@Test

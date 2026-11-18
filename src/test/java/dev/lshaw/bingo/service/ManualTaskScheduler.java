@@ -21,34 +21,34 @@ import java.util.concurrent.TimeUnit;
  * <p>Only {@link #scheduleWithFixedDelay(Runnable, Instant, Duration)} is supported, since that is
  * all {@link GameService} uses.
  */
-class ManualTaskScheduler implements TaskScheduler {
+public class ManualTaskScheduler implements TaskScheduler {
 
-	static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
+	public static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
 
-	record ScheduledTask(Runnable task, Instant startTime, Duration delay, ManualFuture future) {
-		boolean isActive() {
+	public record ScheduledTask(Runnable task, Instant startTime, Duration delay, ManualFuture future) {
+		public boolean isActive() {
 			return !future.isCancelled();
 		}
 	}
 
 	private final List<ScheduledTask> tasks = new ArrayList<>();
 
-	List<ScheduledTask> tasks() {
+	public List<ScheduledTask> tasks() {
 		return List.copyOf(tasks);
 	}
 
-	List<ScheduledTask> activeTasks() {
+	public List<ScheduledTask> activeTasks() {
 		return tasks.stream().filter(ScheduledTask::isActive).toList();
 	}
 
 	/** Runs every task that has not been cancelled, once. */
-	void tick() {
+	public void tick() {
 		for (ScheduledTask t : activeTasks()) {
 			t.task().run();
 		}
 	}
 
-	void tick(int times) {
+	public void tick(int times) {
 		for (int i = 0; i < times; i++) {
 			tick();
 		}
@@ -92,7 +92,7 @@ class ManualTaskScheduler implements TaskScheduler {
 	}
 
 	/** A future that only tracks whether it was cancelled. */
-	static final class ManualFuture implements ScheduledFuture<Object> {
+	public static final class ManualFuture implements ScheduledFuture<Object> {
 
 		private volatile boolean cancelled;
 
