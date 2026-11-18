@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.random.RandomGenerator;
 
 import static dev.lshaw.bingo.game.GameStatus.FINISHED;
@@ -103,7 +104,19 @@ public final class Game {
 		return caller.callNext();
 	}
 
-	/** Whether there are numbers left to call. A scheduler can use this to know when to stop. */
+	/**
+	 * Calls the next number if the game is in progress and numbers are left; otherwise returns
+	 * empty. Checking and calling happen under one lock, so a scheduler cannot call a number just
+	 * after a winning claim finishes the game.
+	 */
+	public synchronized OptionalInt tryCallNextNumber() {
+		if (status != IN_PROGRESS || !caller.hasNext()) {
+			return OptionalInt.empty();
+		}
+		return OptionalInt.of(caller.callNext());
+	}
+
+	/** Whether there are numbers left to call. */
 	public synchronized boolean hasNumbersLeft() {
 		return caller.hasNext();
 	}

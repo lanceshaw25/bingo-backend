@@ -6,6 +6,10 @@ spring:
     consumer:
       auto-offset-reset: earliest
 
+bingo:
+  # How long to wait between called numbers.
+  call-interval: 5s
+
 logging:
   level:
     org:

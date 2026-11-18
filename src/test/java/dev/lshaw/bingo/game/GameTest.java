@@ -157,6 +157,41 @@ class GameTest {
 		assertThat(game.status()).as("still in progress, so players can claim").isEqualTo(IN_PROGRESS);
 	}
 
+	@Test
+	void tryCallNextNumberCallsWhileInProgress() {
+		Game game = newGame();
+		game.join("Lance");
+		game.start();
+		int called = game.tryCallNextNumber().orElseThrow();
+		assertThat(game.snapshot().calledNumbers()).containsExactly(called);
+	}
+
+	@Test
+	void tryCallNextNumberIsEmptyBeforeTheGameStarts() {
+		Game game = newGame();
+		game.join("Lance");
+		assertThat(game.tryCallNextNumber()).isEmpty();
+	}
+
+	@Test
+	void tryCallNextNumberIsEmptyAfterAllSeventyFive() {
+		Game game = newGame();
+		game.join("Lance");
+		game.start();
+		callAll(game);
+		assertThat(game.tryCallNextNumber()).isEmpty();
+	}
+
+	@Test
+	void tryCallNextNumberIsEmptyAfterTheGameIsWon() {
+		Game game = newGame();
+		Player lance = game.join("Lance");
+		game.start();
+		callUntilBingo(game, lance);
+		game.claimBingo(lance.id());
+		assertThat(game.tryCallNextNumber()).isEmpty();
+	}
+
 	// --- Claiming ---
 
 	@Test
