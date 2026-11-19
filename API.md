@@ -6,6 +6,11 @@ then, clients poll `GET /api/games/{gameId}`.
 
 All requests and responses are JSON. IDs are UUIDs.
 
+The running server also describes itself: the OpenAPI spec is at
+`/v3/api-docs`, and Swagger UI at `/swagger-ui.html` lets you try each
+endpoint from the browser. This document covers the concepts the spec
+does not, such as why player IDs are secret.
+
 ## Player IDs are secret
 
 Joining a game returns a `playerId`. It is the only thing that lets a

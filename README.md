@@ -16,7 +16,11 @@ For the REST API that clients use, see [API.md](API.md).
 ./mvnw spring-boot:run
 ```
 
-Kafka UI is available at <http://localhost:8081>.
+Once it is running:
+
+-   Swagger UI (browse and try the REST API): <http://localhost:8080/swagger-ui.html>
+-   OpenAPI spec: <http://localhost:8080/v3/api-docs>
+-   Kafka UI: <http://localhost:8081>
 
 ## Test
 

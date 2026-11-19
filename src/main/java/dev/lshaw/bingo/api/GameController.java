@@ -5,6 +5,9 @@ import dev.lshaw.bingo.game.GameSnapshot;
 import dev.lshaw.bingo.game.Player;
 import dev.lshaw.bingo.game.PlayerId;
 import dev.lshaw.bingo.service.GameService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +27,7 @@ import java.util.UUID;
  *
  * <p>Errors are turned into HTTP responses by {@link ApiExceptionHandler}.
  */
+@Tag(name = "Games")
 @RestController
 @RequestMapping("/api/games")
 public class GameController {
@@ -34,6 +38,8 @@ public class GameController {
 		this.games = games;
 	}
 
+	@Operation(summary = "Create a game")
+	@ApiResponse(responseCode = "201", description = "Created. `Location` is the new game.")
 	@PostMapping
 	public ResponseEntity<GameView> createGame() {
 		GameSnapshot game = games.createGame();
@@ -42,16 +48,22 @@ public class GameController {
 		return ResponseEntity.created(location).body(GameView.from(game));
 	}
 
+	@Operation(summary = "List games")
 	@GetMapping
 	public List<GameSummary> listGames() {
 		return games.games().stream().map(GameSummary::from).toList();
 	}
 
+	@Operation(summary = "Get a game", description = "The public game state. Lists players by name only.")
 	@GetMapping("/{gameId}")
 	public GameView getGame(@PathVariable UUID gameId) {
 		return GameView.from(games.snapshot(new GameId(gameId)));
 	}
 
+	@Operation(summary = "Join a game", description = """
+			Returns the new player's secret `playerId` and card. Names are trimmed and must be \
+			unique in the game, ignoring case. Only allowed before the game starts.""")
+	@ApiResponse(responseCode = "201", description = "Joined. `Location` is the new player.")
 	@PostMapping("/{gameId}/players")
 	public ResponseEntity<PlayerView> join(@PathVariable UUID gameId, @RequestBody JoinRequest request) {
 		if (request.name() == null) {
@@ -63,11 +75,15 @@ public class GameController {
 		return ResponseEntity.created(location).body(PlayerView.from(player));
 	}
 
+	@Operation(summary = "Get your player", description = "Your card, for example after reconnecting.")
 	@GetMapping("/{gameId}/players/{playerId}")
 	public PlayerView getPlayer(@PathVariable UUID gameId, @PathVariable UUID playerId) {
 		return PlayerView.from(games.player(new GameId(gameId), new PlayerId(playerId)));
 	}
 
+	@Operation(summary = "Start a game", description = """
+			Needs at least one player. The server then calls a number every \
+			`bingo.call-interval`.""")
 	@PostMapping("/{gameId}/start")
 	public GameView start(@PathVariable UUID gameId) {
 		GameId id = new GameId(gameId);
@@ -75,6 +91,9 @@ public class GameController {
 		return GameView.from(games.snapshot(id));
 	}
 
+	@Operation(summary = "Claim Bingo", description = """
+			Checked against your card and the numbers the server has called. `NO_BINGO` has \
+			no penalty.""")
 	@PostMapping("/{gameId}/players/{playerId}/claims")
 	public ClaimResponse claimBingo(@PathVariable UUID gameId, @PathVariable UUID playerId) {
 		return ClaimResponse.from(games.claimBingo(new GameId(gameId), new PlayerId(playerId)));
