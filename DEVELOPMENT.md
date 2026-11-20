@@ -268,16 +268,33 @@ strategies until the core game works.
 -   Do not expose Kafka credentials or direct Kafka access to browser
     clients.
 
+## Design decisions
+
+-   **Reconnects and missed events.** Every event carries a per-game
+    `sequence` (1, 2, 3, ... with no gaps), and so do the snapshot and
+    the REST game view. A client subscribes first, fetches the snapshot,
+    and drops any event at or below the snapshot's sequence. A gap in
+    the sequence means an event was missed; the client fetches the
+    snapshot again. See [EVENTS.md](EVENTS.md).
+-   **Event order.** `Game` creates each event and hands it to its
+    listener while holding its lock, right after the state change, so
+    events come out in the order things happened. Events are keyed by
+    game ID, so Kafka keeps one game's events in one partition, in
+    order.
+-   **State and events disagreeing.** The in-memory game is the source
+    of truth. The Kafka producer retries a failed send for up to
+    `delivery.timeout.ms` (two minutes by default); after that, the
+    event is logged and lost, and the game carries on. Clients recover
+    through the sequence gap and a fresh snapshot. Guaranteeing
+    delivery would take a transactional outbox (events saved in a
+    database with the state change, then published by a relay), which
+    only makes sense once games are stored in a database.
+
 ## Open design questions
 
--   **Reconnects and missed events.** Consider a per-game `sequence`
-    number on every event and on the snapshot. A client would subscribe
-    first, fetch the snapshot, and drop any event at or below the
-    snapshot's sequence.
--   **State and events disagreeing.** If game state is updated and the
-    Kafka publish then fails, the two no longer match. Decide whether
-    that is acceptable for this project and what the server does when it
-    happens.
+-   **When the numbers run out.** After all 75 numbers are called with
+    no winning claim, the game stays `IN_PROGRESS` forever. Decide
+    whether it should end, and whether that needs its own event.
 -   **More than one backend instance.** Players are WebSocket clients,
     not Kafka consumers. A single instance needs no special handling,
     but instances sharing a consumer group would each receive only some

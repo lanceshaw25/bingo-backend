@@ -112,7 +112,8 @@ right), and `DIAGONAL_UP` (bottom left to top right).
   "status": "IN_PROGRESS",
   "players": ["Lance", "Bot"],
   "calledNumbers": [70, 72, 30],
-  "winner": null
+  "winner": null,
+  "sequence": 7
 }
 ```
 
@@ -120,6 +121,8 @@ right), and `DIAGONAL_UP` (bottom left to top right).
 -   `calledNumbers`: in the order they were called. The last one is the
     most recent.
 -   `winner`: the winner's name, or `null`.
+-   `sequence`: the number of the last game event this state includes.
+    Live events carry the same number; see [EVENTS.md](EVENTS.md).
 
 ### Player
 

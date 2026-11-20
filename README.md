@@ -3,7 +3,8 @@
 Spring Boot backend for Real-Time Bingo. It owns the game rules and
 authoritative game state, and publishes game events to Kafka. For
 design, plans, and project history, see [DEVELOPMENT.md](DEVELOPMENT.md).
-For the REST API that clients use, see [API.md](API.md).
+For the REST API that clients use, see [API.md](API.md); for the game
+events published to Kafka, see [EVENTS.md](EVENTS.md).
 
 ## Requirements
 

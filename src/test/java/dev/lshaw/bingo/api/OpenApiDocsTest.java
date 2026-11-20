@@ -3,6 +3,7 @@ package dev.lshaw.bingo.api;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -14,6 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** The generated OpenAPI spec is served and describes the game endpoints. */
 @SpringBootTest
+// The app creates its Kafka topic at startup; without a broker it would wait for a timeout.
+@EmbeddedKafka
 @AutoConfigureMockMvc
 class OpenApiDocsTest {
 

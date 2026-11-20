@@ -2,6 +2,7 @@ package dev.lshaw.bingo.api;
 
 import com.jayway.jsonpath.JsonPath;
 import dev.lshaw.bingo.game.BingoCard;
+import dev.lshaw.bingo.game.GameEventListener;
 import dev.lshaw.bingo.game.GameId;
 import dev.lshaw.bingo.game.Player;
 import dev.lshaw.bingo.game.PlayerId;
@@ -49,7 +50,8 @@ class GameControllerTest {
 
 		@Bean
 		GameService gameService(ManualTaskScheduler scheduler) {
-			return new GameService(scheduler, new Random(1), new BingoProperties(Duration.ofSeconds(5)));
+			return new GameService(scheduler, new Random(1), new BingoProperties(Duration.ofSeconds(5)),
+					GameEventListener.NONE);
 		}
 	}
 

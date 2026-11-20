@@ -28,8 +28,13 @@ import static dev.lshaw.bingo.game.GameStatus.WAITING_FOR_PLAYERS;
  * <p>The game does not decide when to call numbers. Something outside it, such as a scheduler,
  * calls {@link #callNextNumber()}.
  *
+ * <p>Each state change creates a {@link GameEvent} and hands it to the game's
+ * {@link GameEventListener} before the method returns. Events are numbered 1, 2, 3, ... per game;
+ * {@link GameSnapshot#sequence()} is the number of the last one.
+ *
  * <p>Thread-safe: every public method that reads or changes state holds the game's lock, so
- * requests and the number-calling scheduler can use the same game from different threads.
+ * requests and the number-calling scheduler can use the same game from different threads. The
+ * listener is called under the same lock, so events are delivered in the order things happened.
  */
 public final class Game {
 
@@ -37,18 +42,33 @@ public final class Game {
 	private final RandomGenerator rng;
 	private final NumberCaller caller;
 	private final Map<PlayerId, Player> players = new LinkedHashMap<>();
+	private final GameEventListener listener;
 
 	private GameStatus status = WAITING_FOR_PLAYERS;
 	private PlayerId winner;
+	/** The sequence number of the last event, or 0 before the first. */
+	private long sequence;
 
 	/**
 	 * Creates a game waiting for players. The generator deals cards and orders the calls; pass a
 	 * seeded one to get the same game every time.
 	 */
 	public Game(GameId id, RandomGenerator rng) {
+		this(id, rng, GameEventListener.NONE);
+	}
+
+	/**
+	 * Creates a game waiting for players that reports its events to the listener, starting with
+	 * {@link GameEvent.GameCreated} from this constructor.
+	 */
+	public Game(GameId id, RandomGenerator rng, GameEventListener listener) {
 		this.id = Objects.requireNonNull(id, "id");
 		this.rng = Objects.requireNonNull(rng, "rng");
+		this.listener = Objects.requireNonNull(listener, "listener");
 		this.caller = new NumberCaller(rng);
+		synchronized (this) {
+			emit(new GameEvent.GameCreated(id, nextSequence()));
+		}
 	}
 
 	public GameId id() {
@@ -78,6 +98,7 @@ public final class Game {
 
 		Player player = new Player(PlayerId.random(), trimmed, BingoCard.random(rng));
 		players.put(player.id(), player);
+		emit(new GameEvent.PlayerJoined(id, nextSequence(), player.id(), player.name()));
 		return player;
 	}
 
@@ -92,6 +113,7 @@ public final class Game {
 			throw new IllegalStateException("Cannot start a game with no players");
 		}
 		status = IN_PROGRESS;
+		emit(new GameEvent.GameStarted(id, nextSequence(), playerNames()));
 	}
 
 	/**
@@ -101,7 +123,7 @@ public final class Game {
 	 */
 	public synchronized int callNextNumber() {
 		requireStatus(IN_PROGRESS, "call a number");
-		return caller.callNext();
+		return callAndEmit();
 	}
 
 	/**
@@ -113,7 +135,7 @@ public final class Game {
 		if (status != IN_PROGRESS || !caller.hasNext()) {
 			return OptionalInt.empty();
 		}
-		return OptionalInt.of(caller.callNext());
+		return OptionalInt.of(callAndEmit());
 	}
 
 	/** Whether there are numbers left to call. */
@@ -143,6 +165,7 @@ public final class Game {
 		}
 		winner = playerId;
 		status = FINISHED;
+		emit(new GameEvent.GameWon(id, nextSequence(), playerId, player.name(), lines));
 		return new ClaimResult.Won(playerId, lines);
 	}
 
@@ -161,7 +184,26 @@ public final class Game {
 	/** A consistent copy of the game's state. Later changes to the game do not affect it. */
 	public synchronized GameSnapshot snapshot() {
 		return new GameSnapshot(id, status, List.copyOf(players.values()), caller.calledNumbers(),
-				Optional.ofNullable(winner));
+				Optional.ofNullable(winner), sequence);
+	}
+
+	private int callAndEmit() {
+		int number = caller.callNext();
+		emit(new GameEvent.NumberCalled(id, nextSequence(), number, caller.calledCount()));
+		return number;
+	}
+
+	private List<String> playerNames() {
+		return players.values().stream().map(Player::name).toList();
+	}
+
+	private long nextSequence() {
+		return ++sequence;
+	}
+
+	/** Called with the lock held, after the state change it describes. */
+	private void emit(GameEvent event) {
+		listener.onEvent(event);
 	}
 
 	private void requireStatus(GameStatus required, String action) {

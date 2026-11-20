@@ -5,6 +5,16 @@ spring:
   kafka:
     consumer:
       auto-offset-reset: earliest
+    producer:
+      # Keys are game IDs (strings, the default serializer); values are JSON.
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        # Leave out Spring's Java class name header. Consumers go by the JSON "type" field,
+        # so they never depend on our Java classes.
+        spring.json.add.type.headers: false
+        # How long send() may block waiting for a broker before failing. The default is 60s;
+        # events are sent while a game's lock is held, so fail sooner if Kafka is down.
+        max.block.ms: 5000
 
 bingo:
   # How long to wait between called numbers.

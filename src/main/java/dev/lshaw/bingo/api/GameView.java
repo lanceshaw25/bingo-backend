@@ -14,13 +14,16 @@ import java.util.UUID;
  * is what lets someone fetch a card or claim Bingo, so it must only go to that player.
  *
  * @param winner the winning player's name, or {@code null} if no one has won
+ * @param sequence the sequence number of the last game event this view includes. A client that
+ *     also receives live events can ignore any event at or below it.
  */
 public record GameView(
 		UUID id,
 		GameStatus status,
 		List<String> players,
 		List<Integer> calledNumbers,
-		String winner) {
+		String winner,
+		long sequence) {
 
 	static GameView from(GameSnapshot snapshot) {
 		String winner = snapshot.winner()
@@ -32,6 +35,7 @@ public record GameView(
 				snapshot.status(),
 				snapshot.players().stream().map(Player::name).toList(),
 				snapshot.calledNumbers(),
-				winner);
+				winner,
+				snapshot.sequence());
 	}
 }

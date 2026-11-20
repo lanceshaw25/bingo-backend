@@ -3,6 +3,7 @@ package dev.lshaw.bingo.service;
 import dev.lshaw.bingo.game.ClaimResult;
 import dev.lshaw.bingo.game.Column;
 import dev.lshaw.bingo.game.Game;
+import dev.lshaw.bingo.game.GameEventListener;
 import dev.lshaw.bingo.game.GameId;
 import dev.lshaw.bingo.game.GameSnapshot;
 import dev.lshaw.bingo.game.Player;
@@ -26,6 +27,9 @@ import java.util.random.RandomGenerator;
  *
  * <p>Games are kept in memory, so they are lost when the server restarts. Game rules live in
  * {@link Game}; this class finds the right game, delegates to it, and schedules number calls.
+ *
+ * <p>Every game reports its events to the {@link GameEventListener} given here, which publishes
+ * them to Kafka in the running app.
  */
 @Service
 public class GameService {
@@ -39,16 +43,22 @@ public class GameService {
 	private final TaskScheduler scheduler;
 	private final RandomGenerator rng;
 	private final Duration callInterval;
+	private final GameEventListener events;
 
-	public GameService(TaskScheduler scheduler, RandomGenerator rng, BingoProperties properties) {
+	public GameService(TaskScheduler scheduler, RandomGenerator rng, BingoProperties properties,
+			GameEventListener events) {
 		this.scheduler = scheduler;
 		this.rng = rng;
 		this.callInterval = properties.callInterval();
+		this.events = events;
 	}
 
 	/** Creates a game that is waiting for players. */
 	public GameSnapshot createGame() {
-		Game game = new Game(GameId.random(), rng);
+		Game game = new Game(GameId.random(), rng, events);
+		// GameCreated was sent from the constructor, just before this put. A client reacting to it
+		// could in theory ask for the game first and get a 404, but Kafka's round trip makes that
+		// very unlikely.
 		games.put(game.id(), game);
 		log.info("Created game {}", game.id());
 		return game.snapshot();

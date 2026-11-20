@@ -1,6 +1,7 @@
 package dev.lshaw.bingo.service;
 
 import dev.lshaw.bingo.game.ClaimResult;
+import dev.lshaw.bingo.game.GameEventListener;
 import dev.lshaw.bingo.game.GameId;
 import dev.lshaw.bingo.game.GameSnapshot;
 import dev.lshaw.bingo.game.GameStatus;
@@ -28,7 +29,7 @@ class GameServiceTest {
 	@BeforeEach
 	void setUp() {
 		scheduler = new ManualTaskScheduler();
-		service = new GameService(scheduler, new Random(1), new BingoProperties(INTERVAL));
+		service = new GameService(scheduler, new Random(1), new BingoProperties(INTERVAL), GameEventListener.NONE);
 	}
 
 	private GameId startedGameWith(String... names) {
